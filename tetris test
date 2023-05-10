@@ -1,0 +1,111 @@
+...import pygame
+import random
+
+pygame.init()
+
+# Установка размера экрана
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 600
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+
+# Цвета
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+
+# Константы элементов тетриса
+BLOCK_SIZE = 20
+BOARD_WIDTH = 10
+BOARD_HEIGHT = 20
+
+# Функция для создания новой фигуры
+def new_piece():
+    # Список всех возможных фигур
+    pieces = [
+        [[1, 1, 1, 1]],
+        [[1, 1, 0], [0, 1, 1]],
+        [[0, 1, 1], [1, 1, 0]],
+        [[1, 1], [1, 1]],
+        [[1, 0, 0], [1, 1, 1]],
+        [[0, 0, 1], [1, 1, 1]],
+        [[1, 1, 1], [0, 0, 1]]
+    ]
+    # Случайный выбор фигуры
+    piece = random.choice(pieces)
+    # Определение цвета фигуры
+    color = random.choice([RED, GREEN, BLUE])
+    return piece, color
+
+# Функция для отрисовки доски
+def draw_board(board, score):
+    screen.fill(WHITE)
+    # Отрисовка каждого блока доски
+    for i in range(BOARD_HEIGHT):
+        for j in range(BOARD_WIDTH):
+            if board[i][j]:
+                pygame.draw.rect(screen, board[i][j], (j*BLOCK_SIZE, i*BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
+    # Отрисовка счета
+    font = pygame.font.Font(None, 30)
+    score_text = font.render("Score: " + str(score), True, BLACK)
+    screen.blit(score_text, (SCREEN_WIDTH - score_text.get_width(), 0))
+
+# Функция для проверки возможности продолжения игры
+def check_game_over(board):
+    if any(board[0]):
+        return True
+    else:
+        return False
+
+# Функция для сложения двух списков
+def sum_lists(list1, list2):
+    return [list1[i]+list2[i] for i in range(len(list1))]
+
+# Функция для поворота фигуры на 90 градусов
+def rotate(piece):
+    return [list(reversed(x)) for x in zip(*piece)]
+
+# Создание доски
+board = [[None]*BOARD_WIDTH for _ in range(BOARD_HEIGHT)]
+# Переменные для игры
+score = 0
+piece, color = new_piece()
+piece_x = BOARD_WIDTH // 2 - len(piece[0]) // 2
+piece_y = 0
+clock = pygame.time.Clock()
+game_over = False
+
+# Игровой цикл
+while not game_over:
+    clock.tick(10)
+    # Обработка событий
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            game_over = True
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_LEFT:
+                # Перемещение фигуры влево
+                if piece_x > 0 and all([board[row][piece_x-1] is None for row in range(piece_y, piece_y+len(piece))]):
+                    piece_x -= 1
+            elif event.key == pygame.K_RIGHT:
+                # Перемещение фигуры вправо
+                if piece_x < BOARD_WIDTH-len(piece[0]) and all([board[row][piece_x+len(piece[0])] is None for row in range(piece_y, piece_y+len(piece))]):
+                    piece_x += 1
+            elif event.key == pygame.K_DOWN:
+                # Ускорение падения фигуры
+                if piece_y < BOARD_HEIGHT-len(piece) and all([board[piece_y+len(piece)][col] is None for col in range(piece_x, piece_x+len(piece[0]))]):
+                    piece_y += 1
+            elif event.key == pygame.K_UP:
+                # Поворот фигуры
+                new_piece = rotate(piece)
+                if piece_x+len(new_piece[0]) <= BOARD_WIDTH and piece_y+len(new_piece) <= BOARD_HEIGHT and all([board[piece_y+row][piece_x+col] is None for row in range(len(new_piece)) for col in range(len(new_piece[0]))]):
+                    piece = new_piece
+        elif event.type == pygame.USEREVENT+1:
+            # Падение фигуры вниз
+            if piece_y < BOARD_HEIGHT-len(piece) and all([board[piece_y+len(piece)][col] is None for col in range(piece_x, piece_x+len(piece[0]))]):
+                piece_y += 1
+            else:
+                # Фигура достигла дна
+                for row in range(len(piece)):
+                    for col
